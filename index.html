@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KPI 시뮬레이터</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Pretendard:wght@300;400;500;600;700&display=swap');
+:root {
+  --bg:#0D1117; --bg2:#161B22; --bg3:#1C2333; --border:#30363D;
+  --blue:#2E86FF; --blue-dim:#1A4F9C; --green:#2EA043;
+  --amber:#D29922; --red:#DA3633;
+  --text:#E6EDF3; --text2:#8B949E; --text3:#484F58;
+  --mono:'DM Mono',monospace; --sans:'Pretendard',sans-serif; --r:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* 헤더 */
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 28px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;}
+.header-title{font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+.header-title span{color:var(--blue);}
+.header-right{display:flex;gap:8px;align-items:center;}
+.nav-tab{font-family:var(--sans);font-size:12px;font-weight:600;padding:6px 14px;
+  border-radius:4px;border:1px solid var(--border);background:transparent;
+  color:var(--text2);cursor:pointer;transition:all .15s;}
+.nav-tab.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+.nav-tab:hover:not(.active){border-color:var(--blue);color:var(--text);}
+.badge{font-family:var(--mono);font-size:11px;background:var(--bg3);
+  border:1px solid var(--border);padding:4px 10px;border-radius:20px;color:var(--text2);}
+
+/* 레이아웃 */
+.layout{display:grid;grid-template-columns:300px 1fr;min-height:calc(100vh - 53px);}
+
+/* 사이드바 */
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:20px;
+  position:sticky;top:53px;height:calc(100vh - 53px);overflow-y:auto;}
+.sec-title{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--text2);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.sec{margin-bottom:24px;}
+.row{margin-bottom:16px;}
+.lbl{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.lbl-text{font-size:11px;color:var(--text2);font-weight:500;}
+.lbl-val{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--blue);
+  background:var(--bg3);border:1px solid var(--border);border-radius:4px;
+  padding:2px 8px;min-width:76px;text-align:right;cursor:pointer;transition:border-color .15s;}
+.lbl-val:focus{outline:none;border-color:var(--blue);color:var(--text);}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;
+  background:var(--bg3);border-radius:2px;outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;
+  border-radius:50%;background:var(--blue);cursor:pointer;}
+.upload-zone{border:1px dashed var(--border);border-radius:var(--r);padding:14px;
+  text-align:center;cursor:pointer;transition:all .2s;}
+.upload-zone:hover{border-color:var(--blue);background:rgba(46,134,255,.04);}
+.upload-icon{font-size:18px;margin-bottom:4px;}
+.upload-text{font-size:11px;color:var(--text2);}
+.upload-hint{font-size:10px;color:var(--text3);margin-top:3px;}
+
+/* 메인 */
+.main{padding:22px 26px;overflow-y:auto;}
+
+/* 배너 */
+.banner{display:flex;align-items:center;gap:10px;padding:11px 16px;
+  border-radius:var(--r);margin-bottom:20px;font-size:13px;font-weight:500;}
+.ok{background:rgba(46,160,67,.1);border:1px solid rgba(46,160,67,.3);color:var(--green);}
+.ng{background:rgba(218,54,51,.1);border:1px solid rgba(218,54,51,.3);color:var(--red);}
+.bv{font-family:var(--mono);font-weight:700;}
+
+/* KPI 카드 */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px;}
+.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);
+  padding:14px;position:relative;overflow:hidden;}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--blue);}
+.kpi-card.g::before{background:var(--green);}
+.kpi-card.a::before{background:var(--amber);}
+.kpi-card.r::before{background:var(--red);}
+.kl{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text2);margin-bottom:6px;}
+.kv{font-family:var(--mono);font-size:20px;font-weight:500;line-height:1;margin-bottom:3px;}
+.ks{font-size:10px;color:var(--text3);}
+
+/* 섹션 헤더 */
+.sh{display:flex;align-items:center;gap:10px;margin-bottom:14px;margin-top:24px;}
+.st{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text2);}
+.sl{flex:1;height:1px;background:var(--border);}
+
+/* 차트 카드 */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.cc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;}
+.ct{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--text2);margin-bottom:14px;}
+.cw{position:relative;}
+
+/* 퍼널 */
+.funnel{display:flex;flex-direction:column;align-items:center;gap:0;padding:2px 0;}
+.fstep{width:100%;background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--r);padding:11px 14px;
+  display:flex;justify-content:space-between;align-items:center;}
+.fsl{font-size:11px;color:var(--text2);font-weight:500;}
+.fsv{font-family:var(--mono);font-size:15px;font-weight:500;}
+.farrow{display:flex;align-items:center;gap:8px;padding:5px 0;width:100%;justify-content:center;}
+.fline{width:1px;height:18px;background:var(--border);}
+.frate{font-family:var(--mono);font-size:12px;font-weight:600;padding:2px 10px;border-radius:20px;}
+.frate.ctr{background:rgba(46,134,255,.15);color:var(--blue);}
+.frate.cvr{background:rgba(46,160,67,.15);color:var(--green);}
+
+/* 영향도 */
+.ilist{display:flex;flex-direction:column;gap:11px;}
+.irow{display:flex;align-items:center;gap:10px;}
+.ilbl{font-size:11px;color:var(--text2);width:36px;flex-shrink:0;text-align:right;}
+.ibwrap{flex:1;background:var(--bg3);border-radius:3px;height:20px;overflow:hidden;}
+.ibar{height:100%;border-radius:3px;display:flex;align-items:center;padding-left:8px;
+  transition:width .4s cubic-bezier(.4,0,.2,1);}
+.ibt{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.8);}
+.ival{font-family:var(--mono);font-size:10px;color:var(--text2);width:56px;
+  flex-shrink:0;text-align:right;}
+
+/* ── 근거 탭 ── */
+.ref-wrap{padding:32px;max-width:860px;margin:0 auto;}
+.rsec{margin-bottom:32px;}
+.rsec-title{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--text2);padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:16px;}
+.rcard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);
+  padding:16px 20px;margin-bottom:10px;}
+.rcard-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.rcard-desc{font-size:12px;color:var(--text2);line-height:1.8;margin-bottom:8px;}
+.rtag{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;
+  background:rgba(46,134,255,.15);color:var(--blue);margin-right:5px;margin-bottom:6px;}
+.rlink{font-size:11px;color:var(--blue);text-decoration:none;font-family:var(--mono);}
+.rlink:hover{text-decoration:underline;}
+.fblock{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);
+  padding:16px 20px;font-family:var(--mono);font-size:12px;color:var(--text2);line-height:2.2;}
+.fblock .hb{color:var(--blue);}
+.fblock .hg{color:var(--green);}
+.fblock .ha{color:var(--amber);}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-title"><span>KPI</span> Simulator — 퍼포먼스 마케팅</div>
+  <div class="header-right">
+    <button class="nav-tab active" id="tab-btn-sim" onclick="switchTab('sim')">시뮬레이터</button>
+    <button class="nav-tab" id="tab-btn-ref" onclick="switchTab('ref')">근거 & 계산 로직</button>
+    <div class="badge">v1.1</div>
+  </div>
+</header>
+
+<!-- ══ 시뮬레이터 탭 ══ -->
+<div id="page-sim">
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="sec">
+      <div class="sec-title">예산 & 매체</div>
+      <div class="row">
+        <div class="lbl"><span class="lbl-text">총 예산</span><input class="lbl-val" id="v-budget" type="text" value="500,000"></div>
+        <input type="range" id="s-budget" min="100000" max="30000000" step="100000" value="500000">
+      </div>
+      <div class="row">
+        <div class="lbl"><span class="lbl-text">CPM (기본)</span><input class="lbl-val" id="v-cpm" type="text" value="5,000"></div>
+        <input type="range" id="s-cpm" min="1000" max="30000" step="500" value="5000">
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sec-title">광고 효율</div>
+      <div class="row">
+        <div class="lbl"><span class="lbl-text">CTR (클릭률)</span><input class="lbl-val" id="v-ctr" type="text" value="2.0%"></div>
+        <input type="range" id="s-ctr" min="0.1" max="10" step="0.1" value="2.0">
+      </div>
+      <div class="row">
+        <div class="lbl"><span class="lbl-text">CVR (전환율)</span><input class="lbl-val" id="v-cvr" type="text" value="3.0%"></div>
+        <input type="range" id="s-cvr" min="0.1" max="20" step="0.1" value="3.0">
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sec-title">매출 & 마진</div>
+      <div class="row">
+        <div class="lbl"><span class="lbl-text">AOV (평균주문금액)</span><input class="lbl-val" id="v-aov" type="text" value="35,000"></div>
+        <input type="range" id="s-aov" min="5000" max="200000" step="1000" value="35000">
+      </div>
+      <div class="row">
+        <div class="lbl"><span class="lbl-text">마진율</span><input class="lbl-val" id="v-margin" type="text" value="40.0%"></div>
+        <input type="range" id="s-margin" min="5" max="80" step="1" value="40">
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sec-title">실데이터 연동</div>
+      <div class="upload-zone" onclick="document.getElementById('csv-input').click()">
+        <div class="upload-icon">📂</div>
+        <div class="upload-text">CSV 업로드</div>
+        <div class="upload-hint">컬럼: budget, cpm, ctr, cvr, aov, margin</div>
+      </div>
+      <input type="file" id="csv-input" accept=".csv" style="display:none">
+      <div id="upload-msg" style="font-size:10px;color:var(--text3);margin-top:6px;text-align:center;"></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div id="be-banner" class="banner ok">
+      <span id="be-icon">✅</span>
+      <span>ROAS <span class="bv" id="be-roas">—</span> — 손익분기 <span class="bv" id="be-be">—</span> <span id="be-msg">달성 ✓</span></span>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kl">노출수</div><div class="kv" id="c-imp">—</div><div class="ks">회 노출</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kl">클릭수</div><div class="kv" id="c-clk">—</div><div class="ks">회 클릭</div>
+      </div>
+      <div class="kpi-card g">
+        <div class="kl">전환수</div><div class="kv" id="c-conv">—</div><div class="ks">건 전환</div>
+      </div>
+      <div class="kpi-card a" id="roas-card">
+        <div class="kl">ROAS</div><div class="kv" id="c-roas">—</div>
+        <div class="ks">CPA <span id="c-cpa">—</span>원</div>
+      </div>
+    </div>
+
+    <div class="sh"><div class="st">퍼널 분석</div><div class="sl"></div></div>
+    <div class="grid2">
+      <div class="cc">
+        <div class="ct">광고 퍼널</div>
+        <div class="funnel" id="funnel"></div>
+      </div>
+      <div class="cc">
+        <div class="ct">KPI 영향도 (각 항목 +10% 개선 시 ROAS 변화)</div>
+        <div class="ilist" id="impact"></div>
+      </div>
+    </div>
+
+    <div class="sh"><div class="st">시나리오 비교</div><div class="sl"></div></div>
+    <div class="cc" style="margin-bottom:14px;">
+      <div class="ct">기본 시나리오 — 현재 / 소재 A/B테스트 (CTR +30%) / 타겟 최적화 (CPM-20%, CTR+20%)</div>
+      <div class="cw" style="height:220px;"><canvas id="chart-scenario"></canvas></div>
+    </div>
+
+    <!-- 사용자 시나리오 토글 -->
+    <div style="margin-bottom:14px;">
+      <button id="custom-toggle" onclick="toggleCustom()" style="
+        width:100%;padding:10px;background:var(--bg2);border:1px dashed var(--border);
+        border-radius:var(--r);color:var(--text2);font-family:var(--sans);font-size:12px;
+        font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.04em;">
+        ＋ 사용자 시나리오 열기
+      </button>
+    </div>
+
+    <div id="custom-panel" style="display:none;margin-bottom:14px;">
+      <div class="cc">
+        <div class="ct">사용자 시나리오 — 실측값 직접 입력</div>
+
+        <!-- 입력 그리드 -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">
+          <div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:5px;">CTR (%)</div>
+            <input id="u-ctr" type="number" step="0.1" min="0.1" max="30" placeholder="예: 3.5"
+              style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:4px;
+              padding:8px 10px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;">
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:5px;">CVR (%)</div>
+            <input id="u-cvr" type="number" step="0.1" min="0.1" max="50" placeholder="예: 4.0"
+              style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:4px;
+              padding:8px 10px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;">
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:5px;">AOV (원)</div>
+            <input id="u-aov" type="number" step="1000" min="1000" placeholder="예: 40000"
+              style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:4px;
+              padding:8px 10px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;">
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:5px;">CPM (원)</div>
+            <input id="u-cpm" type="number" step="500" min="500" placeholder="예: 4500"
+              style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:4px;
+              padding:8px 10px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;">
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:5px;">예산 (원)</div>
+            <input id="u-budget" type="number" step="10000" min="10000" placeholder="예: 1000000"
+              style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:4px;
+              padding:8px 10px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;">
+          </div>
+          <div style="display:flex;align-items:flex-end;">
+            <button onclick="applyCustom()" style="
+              width:100%;padding:9px;background:var(--blue);border:none;border-radius:4px;
+              color:#fff;font-family:var(--sans);font-size:12px;font-weight:700;
+              cursor:pointer;transition:opacity .15s;">
+              적용
+            </button>
+          </div>
+        </div>
+
+        <!-- 결과 카드 -->
+        <div id="custom-result" style="display:none;">
+          <div style="height:1px;background:var(--border);margin-bottom:14px;"></div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+            color:var(--text2);margin-bottom:10px;">계산 결과</div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px;">
+            <div class="kpi-card" style="margin:0;">
+              <div class="kl">노출수</div><div class="kv" style="font-size:16px;" id="u-imp">—</div>
+            </div>
+            <div class="kpi-card" style="margin:0;">
+              <div class="kl">클릭수</div><div class="kv" style="font-size:16px;" id="u-clk">—</div>
+            </div>
+            <div class="kpi-card g" style="margin:0;">
+              <div class="kl">전환수</div><div class="kv" style="font-size:16px;" id="u-conv">—</div>
+            </div>
+            <div class="kpi-card" id="u-roas-card" style="margin:0;">
+              <div class="kl">ROAS</div><div class="kv" style="font-size:16px;" id="u-roas">—</div>
+            </div>
+            <div class="kpi-card" style="margin:0;">
+              <div class="kl">CPA</div><div class="kv" style="font-size:16px;" id="u-cpa">—</div>
+              <div class="ks">원</div>
+            </div>
+          </div>
+          <div id="u-diff" style="font-size:12px;color:var(--text2);padding:10px 14px;
+            background:var(--bg3);border-radius:4px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sh"><div class="st">예산 스케일링 시뮬레이션</div><div class="sl"></div></div>
+    <div class="cc">
+      <div class="ct">예산 확대 시 ROAS 변화 — CPM 상승 효과 반영</div>
+      <div class="cw" style="height:240px;"><canvas id="chart-scale"></canvas></div>
+    </div>
+  </main>
+
+</div>
+</div>
+
+<!-- ══ 근거 & 계산 로직 탭 ══ -->
+<div id="page-ref" style="display:none;">
+<div class="ref-wrap">
+
+  <div class="rsec">
+    <div class="rsec-title">계산 로직</div>
+    <div class="fblock">
+      <div><span class="hb">실제 CPM</span></div>
+      <div style="padding-left:16px;">예산 &lt; 100만원 → 기본 CPM 그대로</div>
+      <div style="padding-left:16px;">예산 ≥ 100만원 → 기본 CPM × (1 + 0.05 × ⌊(예산 - 100만원) / 100만원 + 1⌋)</div>
+      <div style="margin-top:4px;"><span class="hb">노출수</span> = 예산 ÷ 실제 CPM × 1,000</div>
+      <div><span class="hb">클릭수</span> = 노출수 × CTR</div>
+      <div><span class="hb">전환수</span> = 클릭수 × CVR</div>
+      <div><span class="hb">매출</span> = 전환수 × AOV</div>
+      <div style="margin-top:4px;"><span class="hg">ROAS (%)</span> = (매출 ÷ 예산) × 100</div>
+      <div><span class="hg">CPA</span> = 예산 ÷ 전환수</div>
+      <div><span class="ha">손익분기 ROAS</span> = (1 ÷ 마진율) × 100</div>
+    </div>
+    <div class="rcard" style="margin-top:10px;">
+      <div class="rcard-title">CPM 상승 로직 설계 노트</div>
+      <div class="rcard-desc">
+        예산이 늘수록 경쟁 입찰 증가로 CPM이 상승하는 실무 현상을 반영했습니다.<br>
+        100만원 이상부터 <strong>100만원 증가마다 CPM +5% 가산</strong> (초기 50만원 구간 설계에서 완화).<br>
+        예) 예산 300만원 → steps 3 → CPM +15% / 예산 500만원 → steps 5 → CPM +25%<br>
+        <strong>실제 플랫폼 데이터 기반이 아닌 시뮬레이션 목적의 자체 설계값</strong>임을 명시합니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="rsec">
+    <div class="rsec-title">시나리오 설계 근거</div>
+    <div class="rcard">
+      <div class="rcard-title">시나리오 B — 소재 A/B 테스트 (CTR +30%)</div>
+      <span class="rtag">Meta Ads</span><span class="rtag">2026</span>
+      <div class="rcard-desc">
+        소재 빠른 교체 테스트 사이클을 적용한 브랜드는 <strong>최대 45% CTR 개선</strong>을 기록.<br>
+        보수적 수치 +30%를 시나리오 기준값으로 설정.
+      </div>
+      <a class="rlink" href="https://billo.app/blog/what-is-a-good-ctr/" target="_blank">↗ Billo.app — What Is a Good CTR for Ads? (2026)</a>
+    </div>
+    <div class="rcard">
+      <div class="rcard-title">시나리오 C — 타겟 최적화 (CPM -20%, CTR +20%)</div>
+      <span class="rtag">Meta Ads</span><span class="rtag">2025-2026</span>
+      <div class="rcard-desc">
+        정밀 타겟팅 적용 시 관련성 높은 오디언스 노출로 CPM 효율 개선,<br>
+        타겟 적합도 상승으로 CTR 함께 상승하는 복합 시나리오.<br>
+        <strong>CPM -20%, CTR +20%는 시뮬레이션 목적의 가정값</strong>입니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="rsec">
+    <div class="rsec-title">업계 벤치마크</div>
+    <div class="rcard">
+      <div class="rcard-title">Meta Ads 뷰티 & 코스메틱 CTR 벤치마크 (2026)</div>
+      <span class="rtag">Meta Ads</span><span class="rtag">Beauty</span><span class="rtag">2026</span>
+      <div class="rcard-desc">
+        뷰티 & 코스메틱 카테고리 Instagram Stories 기준 CTR <strong>3.1%</strong><br>
+        UGC 비포/애프터 소재가 일반 제품 소재 대비 CVR 2.4배 높음.<br>
+        15초 이하 영상 광고가 긴 포맷 대비 CTR 31% 우위.<br>
+        → 로벡틴 KPI 시뮬레이터 기준값 CTR 3.1% 근거.
+      </div>
+      <a class="rlink" href="https://mhigrowthengine.com/blog/meta-ads-benchmarks-ecommerce-2026/" target="_blank">↗ MHI Growth Engine — Meta Ads Benchmarks Ecommerce 2026</a>
+    </div>
+
+    <div class="rcard">
+      <div class="rcard-title">스킨케어 마진율 (2026)</div>
+      <span class="rtag">Skincare</span><span class="rtag">2026</span>
+      <div class="rcard-desc">
+        스킨케어는 원재료 비중이 낮아 업계 마진율 <strong>50~70%</strong> 수준.<br>
+        → 로벡틴 시뮬레이터 마진율 50% 설정 근거 (보수적 하한값 적용).
+      </div>
+    </div>
+    <div class="rcard">
+      <div class="rcard-title">Meta Ads CVR 업계 평균 & CPM 상승 트렌드 (2025)</div>
+      <span class="rtag">Meta Ads</span><span class="rtag">2025</span>
+      <div class="rcard-desc">
+        뷰티·패션 CVR <strong>2~3%</strong> 범위 (시뮬레이터 기본값 근거)<br>
+        2025년 Meta 전체 CPM <strong>+20.03% 상승</strong> — 예산 확대 시 효율 하락 트렌드 확인
+      </div>
+      <a class="rlink" href="https://www.triplewhale.com/blog/facebook-ads-benchmarks" target="_blank">↗ Triple Whale — Facebook Ad Benchmarks by Industry (2025)</a>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ── 탭 전환 ──
+function switchTab(t) {
+  document.getElementById('page-sim').style.display = t==='sim' ? 'block' : 'none';
+  document.getElementById('page-ref').style.display = t==='ref' ? 'block' : 'none';
+  document.getElementById('tab-btn-sim').classList.toggle('active', t==='sim');
+  document.getElementById('tab-btn-ref').classList.toggle('active', t==='ref');
+}
+
+// ── 계산 엔진 ──
+function calcCPM(budget, base) {
+  if (budget < 1000000) return base;
+  return base * (1 + 0.05 * (Math.floor((budget-1000000)/1000000)+1));
+}
+function calcKPI(budget, baseCPM, ctr, cvr, aov, margin) {
+  const cpm  = calcCPM(budget, baseCPM);
+  const imp  = Math.round(budget / cpm * 1000);
+  const clk  = Math.round(imp * ctr / 100);
+  const conv = Math.round(clk * cvr / 100);
+  const rev  = conv * aov;
+  const roas = budget > 0 ? rev / budget * 100 : 0;
+  const cpa  = conv > 0 ? Math.round(budget / conv) : 0;
+  const be   = margin > 0 ? 100 / (margin/100) : 0;
+  return {cpm,imp,clk,conv,rev,roas,cpa,be};
+}
+
+let p = {budget:500000, cpm:5000, ctr:2.0, cvr:3.0, aov:35000, margin:40};
+let cScenario = null, cScale = null;
+
+const CDefs = {
+  responsive:true, maintainAspectRatio:false,
+  plugins:{legend:{labels:{color:'#8B949E',font:{size:11}}}},
+  scales:{
+    x:{ticks:{color:'#8B949E',font:{size:10}},grid:{color:'#21262D'}},
+    y:{ticks:{color:'#8B949E',font:{size:10}},grid:{color:'#21262D'}}
+  }
+};
+
+function fmt(n){return n.toLocaleString('ko-KR');}
+function fmtP(n){return n.toFixed(1)+'%';}
+
+function render() {
+  const k = calcKPI(p.budget,p.cpm,p.ctr,p.cvr,p.aov,p.margin);
+  const ok = k.roas >= k.be;
+
+  // 배너
+  const bn = document.getElementById('be-banner');
+  bn.className = 'banner '+(ok?'ok':'ng');
+  document.getElementById('be-icon').textContent = ok?'✅':'⚠️';
+  document.getElementById('be-roas').textContent = fmtP(k.roas);
+  document.getElementById('be-be').textContent   = fmtP(k.be);
+  document.getElementById('be-msg').textContent  = ok
+    ? '달성 ✓'
+    : '미달 ('+fmtP(k.be-k.roas)+' 부족)';
+
+  // KPI 카드
+  document.getElementById('c-imp').textContent  = fmt(k.imp);
+  document.getElementById('c-clk').textContent  = fmt(k.clk);
+  document.getElementById('c-conv').textContent = fmt(k.conv);
+  document.getElementById('c-roas').textContent = fmtP(k.roas);
+  document.getElementById('c-cpa').textContent  = fmt(k.cpa);
+  document.getElementById('roas-card').className = 'kpi-card '+(ok?'g':'r');
+
+  // 퍼널
+  document.getElementById('funnel').innerHTML = `
+    <div class="fstep"><span class="fsl">👁 노출</span><span class="fsv">${fmt(k.imp)} <small style="font-size:11px;color:var(--text2)">회</small></span></div>
+    <div class="farrow"><div class="fline"></div><div class="frate ctr">CTR ${p.ctr.toFixed(1)}%</div><div class="fline"></div></div>
+    <div class="fstep"><span class="fsl">🖱 클릭</span><span class="fsv">${fmt(k.clk)} <small style="font-size:11px;color:var(--text2)">회</small></span></div>
+    <div class="farrow"><div class="fline"></div><div class="frate cvr">CVR ${p.cvr.toFixed(1)}%</div><div class="fline"></div></div>
+    <div class="fstep"><span class="fsl">✅ 전환</span><span class="fsv">${fmt(k.conv)} <small style="font-size:11px;color:var(--text2)">건</small></span></div>`;
+
+  // 영향도
+  const base = k.roas;
+  const impacts = [
+    {l:'CVR', v:calcKPI(p.budget,p.cpm,p.ctr,p.cvr*1.1,p.aov,p.margin).roas-base, c:'#2EA043'},
+    {l:'AOV', v:calcKPI(p.budget,p.cpm,p.ctr,p.cvr,p.aov*1.1,p.margin).roas-base, c:'#D29922'},
+    {l:'CTR', v:calcKPI(p.budget,p.cpm,p.ctr*1.1,p.cvr,p.aov,p.margin).roas-base, c:'#2E86FF'},
+    {l:'CPM↓',v:calcKPI(p.budget,p.cpm*0.9,p.ctr,p.cvr,p.aov,p.margin).roas-base, c:'#8B949E'},
+  ].sort((a,b)=>b.v-a.v);
+  const mx = Math.max(...impacts.map(i=>i.v),0.1);
+  document.getElementById('impact').innerHTML = impacts.map(i=>`
+    <div class="irow">
+      <div class="ilbl">${i.l}</div>
+      <div class="ibwrap"><div class="ibar" style="width:${Math.max(i.v/mx*100,1)}%;background:${i.c}">
+        <span class="ibt">+${i.v.toFixed(1)}%p</span></div></div>
+      <div class="ival">+${i.v.toFixed(1)}%p</div>
+    </div>`).join('');
+
+  // 시나리오
+  const sc = [
+    {label:'현재',                      ...calcKPI(p.budget, p.cpm,     p.ctr,     p.cvr, p.aov, p.margin)},
+    {label:'소재 A/B테스트\n(CTR +30%)',  ...calcKPI(p.budget, p.cpm,     p.ctr*1.3, p.cvr, p.aov, p.margin)},
+    {label:'타겟 최적화\n(CPM-20%, CTR+20%)', ...calcKPI(p.budget, p.cpm*0.8, p.ctr*1.2, p.cvr, p.aov, p.margin)},
+  ];
+  const scData = {
+    labels: sc.map(s=>s.label),
+    datasets:[{
+      label:'ROAS (%)',
+      data: sc.map(s=>+s.roas.toFixed(1)),
+      backgroundColor:['#2E86FF','#2EA043','#D29922'],
+      borderRadius:4
+    }]
+  };
+  if (cScenario) {cScenario.data=scData; cScenario.update();}
+  else cScenario = new Chart(document.getElementById('chart-scenario'),
+    {type:'bar', data:scData, options:{...CDefs,
+      plugins:{...CDefs.plugins,
+        tooltip:{callbacks:{label:ctx=>` ROAS ${ctx.raw}%`}}}}});
+
+  // 예산 스케일링
+  const mults = [.25,.5,.75,1,1.25,1.5,2,2.5,3,4,5];
+  const scaleData = {
+    labels: mults.map(m=>m===1?'현재':'×'+m),
+    datasets:[{
+      label:'ROAS (%)',
+      data: mults.map(m=>+calcKPI(Math.round(p.budget*m),p.cpm,p.ctr,p.cvr,p.aov,p.margin).roas.toFixed(1)),
+      borderColor:'#2E86FF', backgroundColor:'rgba(46,134,255,.06)',
+      tension:0, fill:true,
+      pointRadius: mults.map(m=>m===1?7:3),
+      pointBackgroundColor: mults.map(m=>m===1?'#D29922':'#2E86FF'),
+    }]
+  };
+  if (cScale) {
+    cScale.data=scaleData;
+    cScale.update();
+  } else {
+    cScale = new Chart(document.getElementById('chart-scale'),{type:'line', data:scaleData,
+      options:{...CDefs,
+        plugins:{...CDefs.plugins,
+          tooltip:{callbacks:{
+            title:ctx=>{const m=mults[ctx[0].dataIndex]; return '예산 '+fmt(Math.round(p.budget*m))+'원 (×'+m+')';},
+            label:ctx=>` ROAS ${ctx.raw}%`
+          }}
+        }
+      }
+    });
+  }
+}
+
+// ── 슬라이더 연동 ──
+function fmtV(key,val){
+  if(key==='ctr'||key==='cvr'||key==='margin') return val.toFixed(1)+'%';
+  return val.toLocaleString('ko-KR');
+}
+function numOnly(s){return parseFloat(s.replace(/[^0-9.]/g,''))||0;}
+
+[
+  ['budget','s-budget','v-budget'],
+  ['cpm',   's-cpm',   'v-cpm'],
+  ['ctr',   's-ctr',   'v-ctr'],
+  ['cvr',   's-cvr',   'v-cvr'],
+  ['aov',   's-aov',   'v-aov'],
+  ['margin','s-margin','v-margin'],
+].forEach(([key,sid,vid])=>{
+  const s=document.getElementById(sid), v=document.getElementById(vid);
+  s.addEventListener('input',()=>{
+    p[key]=parseFloat(s.value); v.value=fmtV(key,p[key]); render();
+  });
+  v.addEventListener('change',()=>{
+    const n=numOnly(v.value);
+    p[key]=Math.min(parseFloat(s.max),Math.max(parseFloat(s.min),n));
+    s.value=p[key]; v.value=fmtV(key,p[key]); render();
+  });
+});
+
+// ── CSV 업로드 ──
+document.getElementById('csv-input').addEventListener('change',e=>{
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=evt=>{
+    const lines=evt.target.result.split('\n').map(l=>l.trim()).filter(Boolean);
+    if(lines.length<2) return;
+    const headers=lines[0].toLowerCase().split(',').map(h=>h.trim());
+    const vals=lines[1].split(',').map(v=>parseFloat(v.trim()));
+    let loaded=0;
+    headers.forEach((h,i)=>{
+      if(p[h]!==undefined&&!isNaN(vals[i])){p[h]=vals[i];loaded++;}
+    });
+    if(loaded>0){
+      [['budget','s-budget','v-budget'],['cpm','s-cpm','v-cpm'],
+       ['ctr','s-ctr','v-ctr'],['cvr','s-cvr','v-cvr'],
+       ['aov','s-aov','v-aov'],['margin','s-margin','v-margin']
+      ].forEach(([key,sid,vid])=>{
+        document.getElementById(sid).value=p[key];
+        document.getElementById(vid).value=fmtV(key,p[key]);
+      });
+      render();
+      document.getElementById('upload-msg').textContent='✓ '+file.name+' 로드 완료 ('+loaded+'개)';
+    }
+  };
+  reader.readAsText(file);
+});
+
+// ── 사용자 시나리오 ──
+function toggleCustom() {
+  const panel = document.getElementById('custom-panel');
+  const btn   = document.getElementById('custom-toggle');
+  const open  = panel.style.display === 'none';
+  panel.style.display = open ? 'block' : 'none';
+  btn.textContent = open ? '－ 사용자 시나리오 닫기' : '＋ 사용자 시나리오 열기';
+  btn.style.borderStyle = open ? 'solid' : 'dashed';
+  btn.style.color = open ? 'var(--text)' : 'var(--text2)';
+}
+
+function applyCustom() {
+  const uCtr    = parseFloat(document.getElementById('u-ctr').value);
+  const uCvr    = parseFloat(document.getElementById('u-cvr').value);
+  const uAov    = parseFloat(document.getElementById('u-aov').value);
+  const uCpm    = parseFloat(document.getElementById('u-cpm').value);
+  const uBudget = parseFloat(document.getElementById('u-budget').value);
+
+  const ctr    = isNaN(uCtr)    ? p.ctr    : uCtr;
+  const cvr    = isNaN(uCvr)    ? p.cvr    : uCvr;
+  const aov    = isNaN(uAov)    ? p.aov    : uAov;
+  const cpm    = isNaN(uCpm)    ? p.cpm    : uCpm;
+  const budget = isNaN(uBudget) ? p.budget : uBudget;
+
+  const k    = calcKPI(budget, cpm, ctr, cvr, aov, p.margin);
+  const base = calcKPI(p.budget, p.cpm, p.ctr, p.cvr, p.aov, p.margin);
+  const ok   = k.roas >= k.be;
+
+  document.getElementById('u-imp').textContent  = fmt(k.imp);
+  document.getElementById('u-clk').textContent  = fmt(k.clk);
+  document.getElementById('u-conv').textContent = fmt(k.conv);
+  document.getElementById('u-roas').textContent = fmtP(k.roas);
+  document.getElementById('u-cpa').textContent  = fmt(k.cpa);
+  document.getElementById('u-roas-card').className = 'kpi-card '+(ok?'g':'r');
+
+  const diffRoas = +(k.roas - base.roas).toFixed(1);
+  const diffCPA  = k.cpa - base.cpa;
+  const diffConv = k.conv - base.conv;
+  const sign = n => n >= 0 ? '+' : '';
+  document.getElementById('u-diff').innerHTML =
+    `현재 대비 &nbsp;—&nbsp; ROAS <strong style="color:${diffRoas>=0?'var(--green)':'var(--red)'}">${sign(diffRoas)}${diffRoas}%p</strong>
+     &nbsp;|&nbsp; CPA <strong style="color:${diffCPA<=0?'var(--green)':'var(--red)'}">${sign(diffCPA)}${fmt(diffCPA)}원</strong>
+     &nbsp;|&nbsp; 전환수 <strong style="color:${diffConv>=0?'var(--green)':'var(--red)'}">${sign(diffConv)}${diffConv}건</strong>`;
+
+  document.getElementById('custom-result').style.display = 'block';
+}
+
+render();
+</script>
+</body>
+</html>
