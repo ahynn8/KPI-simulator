@@ -235,7 +235,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 
     <div class="sh"><div class="st">시나리오 비교</div><div class="sl"></div></div>
     <div class="cc" style="margin-bottom:14px;">
-      <div class="ct">기본 시나리오 — 현재 / 소재 A/B테스트 (CTR +30%) / 타겟 최적화 (CPM-20%, CTR+20%)</div>
+      <div class="ct">기본 시나리오 — 현재 / 소재 A/B테스트 (CTR +30%) / 타겟 최적화 (CTR+20%, CVR+10%)</div>
       <div class="cw" style="height:220px;"><canvas id="chart-scenario"></canvas></div>
     </div>
 
@@ -375,12 +375,15 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
       <a class="rlink" href="https://billo.app/blog/what-is-a-good-ctr/" target="_blank">↗ Billo.app — What Is a Good CTR for Ads? (2026)</a>
     </div>
     <div class="rcard">
-      <div class="rcard-title">시나리오 C — 타겟 최적화 (CPM -20%, CTR +20%)</div>
+      <div class="rcard-title">시나리오 C — 타겟 최적화 (CTR +20%, CVR +10%)</div>
       <span class="rtag">Meta Ads</span><span class="rtag">2025-2026</span>
       <div class="rcard-desc">
-        정밀 타겟팅 적용 시 관련성 높은 오디언스 노출로 CPM 효율 개선,<br>
-        타겟 적합도 상승으로 CTR 함께 상승하는 복합 시나리오.<br>
-        <strong>CPM -20%, CTR +20%는 시뮬레이션 목적의 가정값</strong>입니다.
+      관심사 기반 정밀 타겟팅 적용 시 비관심군 노출 감소 → CTR 상승,<br>
+      구매 의도 높은 오디언스 집중 노출 → CVR 상승 방향은 유효.<br>
+      단, Meta AI(Advantage+) 확대로 broad targeting이 더 효율적인 경우도 증가 중.<br>
+      <strong>CTR +20%, CVR +10%는 시뮬레이션 목적의 가정값</strong>입니다.<br>
+      <a href="https://www.staphaus.com/insights/precision-targeting-vs-broad-targeting-on-meta-finding-the-right-balance" target="_blank" style="color:#4BAF9F;">참고: Meta 정밀 타겟팅 vs 브로드 타겟팅 비교</a> ·
+      <a href="https://mhigrowthengine.com/blog/meta-ads-benchmarks-ecommerce-2026/" target="_blank" style="color:#4BAF9F;">MHI Growth Engine 2026</a>
       </div>
     </div>
   </div>
@@ -513,7 +516,7 @@ function render() {
   const sc = [
     {label:'현재',                      ...calcKPI(p.budget, p.cpm,     p.ctr,     p.cvr, p.aov, p.margin)},
     {label:'소재 A/B테스트\n(CTR +30%)',  ...calcKPI(p.budget, p.cpm,     p.ctr*1.3, p.cvr, p.aov, p.margin)},
-    {label:'타겟 최적화\n(CPM-20%, CTR+20%)', ...calcKPI(p.budget, p.cpm*0.8, p.ctr*1.2, p.cvr, p.aov, p.margin)},
+    {label:'타겟 최적화\n(CTR+20%, CVR+10%)', ...calcKPI(p.budget, p.cpm, p.ctr*1.2, p.cvr*1.1, p.aov, p.margin)},
   ];
   const scData = {
     labels: sc.map(s=>s.label),
