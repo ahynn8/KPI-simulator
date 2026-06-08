@@ -91,6 +91,6 @@ ROAS     = (전환수 × AOV ÷ 예산) × 100
 
 ## 포트폴리오 연결
 
-- [검색 트렌드 대시보드](https://trend-dashboard-tap.streamlit.app) — 이 시뮬레이터의 KPI 수치 도출 근거 데이터 분석
+- [검색 트렌드 대시보드] — 이 시뮬레이터의 KPI 수치 도출 근거 데이터 분석 (이용약관 상 공유 불가)
 - [뷰티 브랜드 캠페인 기획서](https://drive.google.com/file/d/1ycQZGCR2f9fJDtghe0IE1xCbBHAoQhCR/view?usp=sharing) — Meta Ads KPI 시뮬레이션 포함
 - [패션 브랜드 캠페인 기획서](https://drive.google.com/file/d/1kFHbhB6amNispbV4QTFM8f2e1Lov_-hU/view?usp=sharing) — Meta Ads KPI 시뮬레이션 포함
